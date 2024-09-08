@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import fetchCookie from "fetch-cookie";
 import ical from "ical-generator";
 import moment from "moment-timezone";
@@ -16,9 +17,6 @@ export async function GET(request: Request) {
   const username = searchParams.get("username");
   const password = searchParams.get("password");
   if (!username || !password) return new Response("用户名或密码为空", { status: 400 });
-
-  const dateFrom = searchParams.get("dateFrom") || new Date().toISOString().split("T")[0];
-  const dateTo = searchParams.get("dateTo") || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0];
 
   const loginPage = await fetch("https://lukkari.turkuamk.fi/rest/login");
   const sso = await fetch(loginPage.url, {
@@ -52,6 +50,11 @@ export async function GET(request: Request) {
     // @ts-ignore
     credentials: "include"
   });
+
+  // 昨天的日期
+  const dateFrom = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+  // 往后15天的日期
+  const dateTo = dayjs().add(15, "day").format("YYYY-MM-DD");
 
   const events = await fetch("https://lukkari.turkuamk.fi/rest/basket/35517/events", {
     method: "POST",

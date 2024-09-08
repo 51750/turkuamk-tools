@@ -74,7 +74,7 @@ export async function GET(request: Request) {
       end: moment.tz(item["end_date"], "YYYY-MM-DD HH:mm", timezone),
       summary: item["subject"] || "No Subject",
       location: item["location"]?.map((loc: any) => loc["class"])?.join(", "),
-      description: `Reserved for: ${item["reserved_for"].join(", ")}\nStudent Groups: ${item["student_groups"].join(", ")}`
+      description: `Reserved for: ${item["reserved_for"]?.join(", ")}\nStudent Groups: ${item["student_groups"]?.join(", ")}`
     });
   });
 

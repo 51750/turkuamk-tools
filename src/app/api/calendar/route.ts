@@ -3,6 +3,8 @@ import ical from "ical-generator";
 import moment from "moment-timezone";
 import nodefetch from "node-fetch";
 import tough from "tough-cookie";
+import { DOMParser } from "xmldom";
+import xpath from "xpath";
 
 export async function GET(request: Request) {
   request.headers.set("Cache-Control", "no-cache");
@@ -18,12 +20,8 @@ export async function GET(request: Request) {
   const dateFrom = searchParams.get("dateFrom") || new Date().toISOString().split("T")[0];
   const dateTo = searchParams.get("dateTo") || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0];
 
-  await fetch("https://lukkari.turkuamk.fi/rest/user/");
-  // return new Response(user.headers.get("Set-Cookie"));
-
-  const restlogin = await fetch("https://lukkari.turkuamk.fi/rest/login");
-
-  const sso = await fetch(restlogin.url, {
+  const loginPage = await fetch("https://lukkari.turkuamk.fi/rest/login");
+  const sso = await fetch(loginPage.url, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -32,33 +30,36 @@ export async function GET(request: Request) {
     redirect: "follow"
   });
 
-  let htmlString = await sso.text();
-  // return new Response(htmlString, { headers: { "Content-Type": "text/html", } });
+  const htmlString = await sso.text();
 
-  const relayStateMatch = htmlString.match(/name="RelayState" value="([^"]*)"/);
-  const samlResponseMatch = htmlString.match(/name="SAMLResponse" value="([^"]*)"/);
+  const doc = new DOMParser().parseFromString(htmlString);
+  // @ts-ignore
+  const RelayState = xpath.select("//input[@name='RelayState']/@value", doc)?.[0].nodeValue;
+  // @ts-ignore
+  const SAMLResponse = xpath.select("//input[@name='SAMLResponse']/@value", doc)?.[0].nodeValue;
 
-  const RelayState = relayStateMatch ? relayStateMatch[1] : null;
-  const SAMLResponse = samlResponseMatch ? samlResponseMatch[1] : null;
-  // return new Response(`RelayState: ${RelayState}\nSAMLResponse: ${SAMLResponse}`);
+  // return Response.json({ value: nodes?.[0].nodeValue });
 
-  const login = await fetch("https://lukkari.turkuamk.fi/", {
-    "headers": {
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    // "body": `RelayState=${RelayState}&SAMLResponse=${SAMLResponse}`,
-    // "method": "GET"
+
+  const urlencoded = new URLSearchParams();
+  urlencoded.append("RelayState", RelayState);
+  urlencoded.append("SAMLResponse", SAMLResponse);
+
+  await fetch("https://lukkari.turkuamk.fi/Shibboleth.sso/SAML2/POST", {
+    method: "POST",
+    body: urlencoded,
+    redirect: "follow",
+    // @ts-ignore
+    credentials: "include"
   });
 
-  // return new Response(postloginResponse.headers.get("SeCookie"));
-
-  const res = await fetch("https://lukkari.turkuamk.fi/rest/basket/35517/events", {
+  const events = await fetch("https://lukkari.turkuamk.fi/rest/basket/35517/events", {
     method: "POST",
     body: JSON.stringify({ dateFrom, dateTo, eventType: "visible" })
   });
 
   // 加载 JSON 数据
-  const scheduleData = await res.json();
+  const scheduleData = await events.json();
 
   // 芬兰时区
   const timezone = "Europe/Helsinki";

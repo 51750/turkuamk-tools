@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   // 昨天的日期
   const dateFrom = dayjs().subtract(1, "day").format("YYYY-MM-DD");
   // 往后15天的日期
-  const dateTo = dayjs().add(15, "day").format("YYYY-MM-DD");
+  const dateTo = dayjs().add(1, "month").format("YYYY-MM-DD");
 
   const events = await fetch("https://lukkari.turkuamk.fi/rest/basket/35517/events", {
     method: "POST",

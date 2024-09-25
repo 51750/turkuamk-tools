@@ -68,7 +68,7 @@ export async function GET(request: Request) {
   const timezone = "Europe/Helsinki";
 
   // 创建一个新的日历
-  const calendar = ical({ timezone: timezone });
+  const calendar = ical({ timezone });
 
   // 将 JSON 中的每个事件转换为 iCal 事件
   (scheduleData as any[]).forEach(item => {
@@ -77,7 +77,8 @@ export async function GET(request: Request) {
       end: moment.tz(item["end_date"], "YYYY-MM-DD HH:mm", timezone),
       summary: item["subject"] || "No Subject",
       location: item["location"]?.map((loc: any) => loc["class"])?.join(", "),
-      description: `Reserved for: ${item["reserved_for"]?.join(", ")}\nStudent Groups: ${item["student_groups"]?.join(", ")}`
+      description: `Reserved for: ${item["reserved_for"]?.join(", ")}\nStudent Groups: ${item["student_groups"]?.join(", ")}`,
+      categories: item["realizations"],
     });
   });
 

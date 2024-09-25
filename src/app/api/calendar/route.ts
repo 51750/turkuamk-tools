@@ -78,7 +78,6 @@ export async function GET(request: Request) {
       summary: item["subject"] || "No Subject",
       location: item["location"]?.map((loc: any) => loc["class"])?.join(", "),
       description: `Reserved for: ${item["reserved_for"]?.join(", ")}\nStudent Groups: ${item["student_groups"]?.join(", ")}`,
-      categories: item["realizations"],
     });
   });
 
